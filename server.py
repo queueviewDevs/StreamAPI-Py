@@ -94,6 +94,18 @@ async def control_camera_stream(client_id: str, command: StreamCommand):
     return {"status": f"Command '{action}' sent to client {client_id}"}
 
 
+@app.post("/api/on-live-auth")
+async def onLiveAuth():
+    return JSONResponse(
+            status_code=200, content={"verified": True}
+        )
+    
+@app.post("/api/on-live-done")
+async def onLiveDone():
+    return JSONResponse(
+            status_code=200, content={"done": True}
+        )
+
 @app.get("/")
 async def root():
     return {"message": "FastAPI WebSocket and RTMP Server"}
