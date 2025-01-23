@@ -14,7 +14,7 @@ class ClientManager:
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
-        client_id = str(uuid.uuid4())  # Generate a unique ID for each client
+        client_id = str("cam1")  # Generate a unique ID for each client
         self.clients[client_id] = websocket
         print(f"Client {client_id} connected.")
         return client_id
