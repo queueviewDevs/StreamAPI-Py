@@ -14,13 +14,18 @@ class ClientManager:
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
-        client_id = str("cam1")  # Generate a unique ID for each client
+        #client_id = str("cam1")  # Generate a unique ID for each client
+        client_id = str(uuid.uuid4())  # Generate unique client IDs
         self.clients[client_id] = websocket
         print(f"Client {client_id} connected.")
         return client_id
 
     def disconnect(self, client_id: str):
         if client_id in self.clients:
+            try:
+                self.clients[client_id].close()
+            except Exception:
+                pass  # Ignore errors if already closed
             del self.clients[client_id]
             print(f"Client {client_id} disconnected.")
 
@@ -33,12 +38,17 @@ class ClientManager:
                 self.disconnect(client_id)
 
     async def broadcast(self, message: dict):
+        to_remove = []
         for client_id, websocket in self.clients.items():
             try:
                 await websocket.send_json(message)
             except Exception as e:
                 print(f"Error broadcasting to {client_id}: {e}")
-                self.disconnect(client_id)
+                to_remove.append(client_id)
+
+        # Remove disconnected clients
+        for client_id in to_remove:
+            self.disconnect(client_id)
 
 
 # Shared client manager
@@ -67,15 +77,19 @@ async def websocket_endpoint(websocket: WebSocket):
 
     try:
         while True:
-            data = await websocket.receive_json()
-            print(f"Received message from {client_id}: {data}")
-            # Handle incoming messages (e.g., status updates)
+            try:
+                data = await asyncio.wait_for(websocket.receive_json(), timeout=30)  # 30s timeout
+            except asyncio.TimeoutError:
+                print(f"Client {client_id} timed out.")
+                client_manager.disconnect(client_id)  # Ensure cleanup
+                break
     except WebSocketDisconnect:
         print(f"Client {client_id} disconnected.")
-        client_manager.disconnect(client_id)
     except Exception as e:
         print(f"Error in WebSocket connection: {e}")
-        client_manager.disconnect(client_id)
+    finally:
+        await websocket.close()
+        client_manager.disconnect(client_id)  # Ensure client is removed
 
 
 @app.post("/api/camera/{client_id}/stream")
