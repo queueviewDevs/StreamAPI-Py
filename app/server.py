@@ -1,8 +1,9 @@
-from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from starlette.websockets import WebSocketState
 from .routers import cameras, auth
 from .models.clients import *
 from .dependencies.auth import authenticate_websocket_user
+from .dependencies.config import init_db
 
 description = """
 This is a camera client controller API that allows you to interface with the mobile raspberry pi clients.
@@ -34,6 +35,13 @@ app = FastAPI(
     },
     openapi_tags=tags_metadata
 )
+
+# from .dependencies.config import test, populate
+@app.on_event("startup")
+def on_startup():
+    init_db()
+    # populate()
+    # test()
 
 #=============================================
 # Router inclusions
