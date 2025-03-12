@@ -15,7 +15,6 @@ from ..models.users import User
 
 SECRET_KEY = "056509aebe10c9cd862799f66bd169adef0a05f5f7d55e655ee641dc42a60494"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRES_DAYS = 1
 
 
 class Token(BaseModel):
@@ -70,12 +69,9 @@ def authenticate_user(username: str, password: str):
 
 
 
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
+def create_access_token(data: dict):
     to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
-    else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    expire = datetime.now(timezone.utc) + timedelta(days=1)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
