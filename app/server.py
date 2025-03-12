@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from starlette.websockets import WebSocketState
-from .routers import cameras, auth
+from .routers import cameras, auth, nginx
 from .models.clients import *
 from .dependencies.auth import authenticate_websocket_user
 from .dependencies.config import init_db
@@ -20,7 +20,7 @@ tags_metadata = [
         "description": "Operations with camera clients"
     },
     {
-        "name": "Internal",
+        "name": "NGINX",
         "description": "Internal endpoints called by NGINX"
     }
 ]
@@ -48,6 +48,7 @@ def on_startup():
 #=============================================
 app.include_router(cameras.router)
 app.include_router(auth.router)
+app.include_router(nginx.router)
 
 
 #=============================================

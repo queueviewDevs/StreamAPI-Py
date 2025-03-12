@@ -2,8 +2,6 @@ from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, Re
 from ..models.clients import *
 from ..dependencies.auth import get_current_active_user
 
-# Authentication token
-AUTH_TOKEN = "secret"
 
 router = APIRouter(
     prefix="/api/cameras",
@@ -125,34 +123,6 @@ async def stream_command(id: int, command: StreamCommand):
     await client_manager.send_message(id, message)
     return {"status": f"Command '{action}' sent to client {id}"}
 
-
-
-@router.post("/publish", status_code=200)
-async def on_Publish():
-    """Authorizes the RTMP streamer client to start sending video stream.
-
-    Returns:
-        JSON: {"verified": True}
-    """
-    
-    #Change this to provide metadata to the camera
-    return {"verified": True}
-    
-    
-    
-@router.post("/end-publish", status_code=200)
-async def end_Publish():
-    """Indicates that the RTMP streamer client stopped sending video stream.
-
-    Returns:
-        None
-    """
-    
-    #Change this to provide  metadata to the camera
-    return {}
-
-def testauth():
-    pass
 
 @router.websocket("/connect")
 async def websocket_endpoint(websocket: WebSocket):
