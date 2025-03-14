@@ -1,6 +1,5 @@
 from fastapi import WebSocket, HTTPException, WebSocketDisconnect
 from starlette.websockets import WebSocketState
-from pydantic import BaseModel
 from typing import Dict
 from .camera import CameraClient
 from .general import StreamCommand

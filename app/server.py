@@ -1,8 +1,5 @@
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
-from starlette.websockets import WebSocketState
-from .routers import cameras, auth, nginx, devices
-from .routers import devices, users
-from .models.manager import *
+from fastapi import FastAPI
+from .routers import cameras, auth, nginx, devices, devices, users
 from .dependencies.db import create_indexes
 
 description = """

@@ -1,16 +1,14 @@
 from fastapi import Depends, HTTPException, status, WebSocket, Security
 from fastapi.security import OAuth2PasswordBearer, APIKeyHeader
-from typing import Annotated, Optional
+from typing import Optional
 import jwt
 from jwt.exceptions import InvalidTokenError
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
-from sqlmodel import select
 import hashlib
 
 from ..schemas.user import User
 from ..schemas.device import Device
-from ..dependencies.db import users_collection
 from ..crud.users import get_user
 from ..crud.devices import verify_api_key
 
