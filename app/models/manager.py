@@ -2,46 +2,14 @@ from fastapi import WebSocket, HTTPException, WebSocketDisconnect
 from starlette.websockets import WebSocketState
 from pydantic import BaseModel
 from typing import Dict
-
-class CameraClient(BaseModel):
-    id: int
-    name: str
-    connected: bool
-    streaming: bool = False
-    liveStreamURL: str = ""
-    
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {
-                    "id": 12345,
-                    "name": "laurier-pubOnKing-NorthCam",
-                    "connected": True
-                }
-            ]
-        }
-    }
-    
-    def update(self, updates: dict):
-        for key, value in updates.items():
-            if key != "id" and hasattr(self, key):
-                setattr(self, key, value)
-
-        
-class StreamCommand(BaseModel):
-    stream: bool = False  # True for start, False for stop
+from .camera import CameraClient
+from .general import StreamCommand
 
 # Store connected clients
 class ClientManager:
     def __init__(self):
         self.clients: Dict[int, CameraClient] = {}
         self.websockets: Dict[int, WebSocket] = {}
-        #Test data
-        # self.clients: Dict[int, CameraClient] = {
-        #     1: CameraClient(id=1, name="Camera 1", connected=True),
-        #     2: CameraClient(id=2, name="Camera 2", connected=True),
-        #     3: CameraClient(id=3, name="Camera 3", connected=False),
-        # }
 
         
     def getClients(self):
@@ -82,7 +50,6 @@ class ClientManager:
 
         await websocket.accept()
         identification = await websocket.receive_json()
-        print(f"Data received: {identification}")
 
         client_id = identification.get("id")
         self.clients[client_id] = CameraClient(

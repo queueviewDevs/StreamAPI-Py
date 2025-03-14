@@ -1,9 +1,9 @@
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from starlette.websockets import WebSocketState
-from .routers import cameras, auth, nginx
-from .models.clients import *
-from .dependencies.auth import authenticate_websocket_user
-from .dependencies.config import init_db
+from .routers import cameras, auth, nginx, devices
+from .routers import devices, users
+from .models.manager import *
+from .dependencies.db import create_indexes
 
 description = """
 This is a camera client controller API that allows you to interface with the mobile raspberry pi clients.
@@ -22,6 +22,14 @@ tags_metadata = [
     {
         "name": "NGINX",
         "description": "Internal endpoints called by NGINX"
+    },
+    {
+        "name": "Devices",
+        "description": "Operations on the devices database collection. Requires admin user privilleges"
+    },
+    {
+        "name": "Users",
+        "description": "Operations on the users database collection. Requires admin user privilleges"
     }
 ]
 
@@ -36,12 +44,11 @@ app = FastAPI(
     openapi_tags=tags_metadata
 )
 
-# from .dependencies.config import test, populate
+
 @app.on_event("startup")
-def on_startup():
-    init_db()
-    # populate()
-    # test()
+async def startup():
+    await create_indexes()
+
 
 #=============================================
 # Router inclusions
@@ -49,6 +56,8 @@ def on_startup():
 app.include_router(cameras.router)
 app.include_router(auth.router)
 app.include_router(nginx.router)
+app.include_router(devices.router)
+app.include_router(users.router)
 
 
 #=============================================
@@ -58,31 +67,3 @@ app.include_router(nginx.router)
 @app.get("/")
 async def root():
     return {"message": "FastAPI WebSocket and RTMP Server"}
-
-
-@app.websocket("/connect")
-async def websocket_endpoint(websocket: WebSocket):
-    """The websocket connection endpoint
-
-    Args:
-        websocket (WebSocket)
-    """
-    
-    client_id = None
-    
-    try:
-        await authenticate_websocket_user(websocket)
-    
-        client_id = await cameras.client_manager.connect(websocket)
-        
-        while websocket.client_state != WebSocketState.DISCONNECTED:
-            
-            data = await websocket.receive_text()
-    except (HTTPException):
-        print("Invalid WebSocket authentication")
-        
-    except WebSocketDisconnect:
-        print("Client quit unexpectedly")
-    
-    finally:
-        await cameras.client_manager.disconnect(client_id)

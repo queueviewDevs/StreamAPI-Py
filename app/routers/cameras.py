@@ -1,12 +1,13 @@
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, Response, Depends, status
-from ..models.clients import *
-from ..dependencies.auth import get_current_active_user
+from ..models.manager import *
+from ..auth.auth import get_current_client
 
+#Will authenticate with users cluster and interact with ClientManager
 
 router = APIRouter(
     prefix="/api/cameras",
     tags=["Cameras"],
-    dependencies=[Depends(get_current_active_user)]
+    dependencies=[Depends(get_current_client)]
 )
 
 # Shared client manager
@@ -73,7 +74,7 @@ async def get_cameras() -> list[CameraClient]:
 
 
 @router.get("/{id}", status_code=200, responses=cam_not_found_doc_response)
-async def get_camera(id: int) -> CameraClient:
+async def get_camera(id: str) -> CameraClient:
     """Get the metadata of a specific camera client
 
     Args:
@@ -87,7 +88,7 @@ async def get_camera(id: int) -> CameraClient:
 
 
 @router.put("/{id}", status_code=status.HTTP_200_OK, response_model=CameraClient, responses=cam_not_found_doc_response)
-async def update_camera(id: int, data: dict):
+async def update_camera(id: str, data: dict):
     
     print("Update data:", data)
     updated_client = client_manager.updateClient(id, data)
@@ -113,7 +114,7 @@ async def stream_command_all(command: StreamCommand):
     **cam_not_found_doc_response,
     **cam_cmd_err_doc_response
 })
-async def stream_command(id: int, command: StreamCommand):
+async def stream_command(id: str, command: StreamCommand):
     """
     Start/stop the streaming of a particular client
     """
@@ -122,22 +123,3 @@ async def stream_command(id: int, command: StreamCommand):
     message = {"action": action}
     await client_manager.send_message(id, message)
     return {"status": f"Command '{action}' sent to client {id}"}
-
-
-@router.websocket("/connect")
-async def websocket_endpoint(websocket: WebSocket):
-    """The websocket connection endpoint
-
-    Args:
-        websocket (WebSocket)
-    """
-    print("Inside the endpoint")
-    await client_manager.connect(websocket)
-    
-    try:
-        while True:
-            data = await websocket.receive_json()
-            print(f"Data received: {data}")
-            #await some other client manager function
-    except WebSocketDisconnect:
-        await client_manager.disconnect(websocket)
